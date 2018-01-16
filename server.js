@@ -23,9 +23,9 @@ app.use(
     connection(mysql,{
         host     : 'localhost',
         user     : 'root',
-        password : '',
-        database : 'test',
-        debug    : false //set true if you wanna see debug logger
+        password : 'root',
+        database : 'node',
+        debug    : true //set true if you wanna see debug logger
     },'request')
 
 );
@@ -178,6 +178,7 @@ curut2.put(function(req,res,next){
 
     //get data
     var data = {
+
         name:req.body.name,
         email:req.body.email,
         password:req.body.password
@@ -236,3 +237,6 @@ var server = app.listen(3000,function(){
    console.log("Listening to port %s",server.address().port);
 
 });
+
+
+
