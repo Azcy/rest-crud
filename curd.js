@@ -3,7 +3,7 @@ var express   = require('express'),
     bodyParser= require('body-parser'),
     app       = express(),
     expressValidator=require('express-validator');
-
+const Qs = require('qs');
 /*Set EJS template Engine*/
 app.set('views','./views');
 app.set('view engine','ejs');
@@ -17,15 +17,7 @@ app.use(expressValidator());
 var connection = require('express-myconnection'),
     mysql=require('mysql');
 
-app.use(
-    connection(mysql,{
-        host    :'localhost',
-        user    :'root',
-        password:'root',
-        database:'node',
-        debug   :false
-        },'request')
-);
+
 
 app.get('/',function (req,res) {
     res.send('welcome');
@@ -41,23 +33,86 @@ router.use(function (req,res,next) {
     console.log(req.method,req.uri);
     next();
 });
+var curut = router.route('/:table');
 
-var curut = router.route('/user');
 
-
-//show the CRUD interface | GET
 curut.get(function (req,res,next) {
+    var table=req.params.table;
+
+    console.log(table);
     req.getConnection(function (err,conn) {
-        if (err) return next("Cannot connect");
 
-        var query=conn.query('SELECT * FROM t_user',function (err,rows) {
+        
 
+        var query=conn.query('SELECT * FROM '+[table],function (err,rows) {
+            var result = {
+                Status: req.query.genus,
+                Abnormal: req.query.evt,
+                data: rows
+            }
             if(err){
-                console.log(err);
-                return next("Mysql error, check your query");
+
+                result.Status='faile';
+
+                result.data=err;
+              /*  throw err;*/
+               /* console.log(err);
+
+                 res.jsonp(result);*/
+
+            }else {
+                result.Status='success';
             }
 
-            res.render('user',{title:"RESTful Crud Example",data:rows});
+
+            res.jsonp(result);
+            // res.end(rows);
+            //res.render('user',{title:"RESTful Crud Example",data:rows});
+        });
+
+    });
+
+});
+
+var curut1 = router.route('/:table/:name');
+
+app.use(
+    connection(mysql,{
+        host    :'localhost',
+        user    :'root',
+        password:'root',
+        database:'node',
+        debug   :false
+    },'request')
+);
+//show the CRUD interface | GET
+curut1.get(function (req,res,next) {
+    var table=req.params.table;
+    var name=req.params.name;
+    console.log(table,name);
+    req.getConnection(function (err,conn) {
+
+        if (err) return next("Cannot connect");
+
+        if(name==null){
+            name='*';
+        }
+        var query=conn.query('SELECT '+[name]+' FROM '+[table],function (err,rows) {
+            var result = {
+                Status: res.statusCode,
+                Abnormal: req.query.evt,
+                data: rows
+            }
+            if(err){
+                console.log(err);
+
+                return res.jsonp(result);
+            }
+
+
+             res.jsonp(result);
+           // res.end(rows);
+            //res.render('user',{title:"RESTful Crud Example",data:rows});
         });
 
     });
@@ -65,7 +120,7 @@ curut.get(function (req,res,next) {
 });
 
 //post data to DB | POST
-curut.post(function (req,res,next) {
+curut1.post(function (req,res,next) {
     //validation
     req.assert('name','Name is required').notEmpty();
     req.assert('email','A valid email is required').isEmail();
@@ -122,7 +177,7 @@ curut2.get(function (req,res,next) {
     req.getConnection(function (err,conn) {
         if (err) return next("Cannot Connect");
         
-        var query=conn.query("SELECT * FROM t_user WHEREE user_id=?",[user_id],function (err,rows) {
+        var query=conn.query("SELECT * FROM t_user WHERE user_id=?",[user_id],function (err,rows) {
             if (err){
                 console.log(err);
                 return next("mysql error, check your query");
@@ -205,5 +260,14 @@ app.use('/api',router);
 
 //start Server
 var server=app.listen(3000,function () {
+
+    let obj= {
+        method: "query_sql_dataset_data",
+        projectId: "85",
+        appToken: "7d22e38e-5717-11e7-907b-a6006ad3dba0",
+        datasetId:  {$like: '%Str%'}
+    };
+    Qs.stringify(obj);
+    console.log(Qs.stringify(obj));
     console.log("Listening to port %s",server.address().port);
 });
